@@ -1,0 +1,279 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct Edge;
+
+struct Node {
+    int id;
+    char name[50];
+    struct Edge* edges;
+    struct Node* next;
+};
+
+struct Edge {
+    struct Node* dest;
+    int capacity;
+    struct Edge* next;
+};
+
+struct Node* head = NULL;
+
+struct Node* findNode(int id) {
+    struct Node* temp = head;
+    while (temp) {
+        if (temp->id == id)
+            return temp;
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+void addNode() {
+    int id;
+    printf("Enter Node ID: ");
+    scanf("%d", &id);
+
+    if (findNode(id)) {
+        printf("Node already exists.\n");
+        return;
+    }
+
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    newNode->id = id;
+
+    printf("Enter Node Name: ");
+    scanf("%s", newNode->name);
+
+    newNode->edges = NULL;
+    newNode->next = head;
+    head = newNode;
+
+    printf("Node added.\n");
+}
+
+void addEdge() {
+    int src, dest, cap;
+
+    printf("Enter Source ID: ");
+    scanf("%d", &src);
+    printf("Enter Destination ID: ");
+    scanf("%d", &dest);
+
+    struct Node* s = findNode(src);
+    struct Node* d = findNode(dest);
+
+    if (!s || !d) {
+        printf("Invalid nodes.\n");
+        return;
+    }
+
+    printf("Enter Capacity: ");
+    scanf("%d", &cap);
+
+    struct Edge* newEdge = (struct Edge*)malloc(sizeof(struct Edge));
+    newEdge->dest = d;
+    newEdge->capacity = cap;
+    newEdge->next = s->edges;
+    s->edges = newEdge;
+
+    printf("Connection added.\n");
+}
+
+void displayGraph() {
+    struct Node* temp = head;
+
+    if (!temp) {
+        printf("Graph empty.\n");
+        return;
+    }
+
+    while (temp) {
+        printf("\n%d (%s): ", temp->id, temp->name);
+
+        struct Edge* e = temp->edges;
+        while (e) {
+            printf(" -> %d (%s) [Cap:%d]", e->dest->id, e->dest->name, e->capacity);
+            e = e->next;
+        }
+
+        temp = temp->next;
+    }
+    printf("\n");
+}
+
+void searchNode() {
+    int id;
+    printf("Enter ID: ");
+    scanf("%d", &id);
+
+    struct Node* n = findNode(id);
+
+    if (!n) {
+        printf("Not found.\n");
+        return;
+    }
+
+    printf("Found: %d (%s)\n", n->id, n->name);
+}
+
+void updateNode() {
+    int id;
+    printf("Enter ID: ");
+    scanf("%d", &id);
+
+    struct Node* n = findNode(id);
+
+    if (!n) {
+        printf("Not found.\n");
+        return;
+    }
+
+    printf("Enter new name: ");
+    scanf("%s", n->name);
+
+    printf("Updated.\n");
+}
+
+void updateEdge() {
+    int src, dest;
+
+    printf("Enter Source: ");
+    scanf("%d", &src);
+    printf("Enter Destination: ");
+    scanf("%d", &dest);
+
+    struct Node* s = findNode(src);
+
+    if (!s) {
+        printf("Invalid.\n");
+        return;
+    }
+
+    struct Edge* e = s->edges;
+
+    while (e) {
+        if (e->dest->id == dest) {
+            printf("Enter new capacity: ");
+            scanf("%d", &e->capacity);
+            printf("Updated.\n");
+            return;
+        }
+        e = e->next;
+    }
+
+    printf("Connection not found.\n");
+}
+
+void deleteEdge() {
+    int src, dest;
+
+    printf("Enter Source: ");
+    scanf("%d", &src);
+    printf("Enter Destination: ");
+    scanf("%d", &dest);
+
+    struct Node* s = findNode(src);
+
+    if (!s) {
+        printf("Invalid.\n");
+        return;
+    }
+
+    struct Edge* curr = s->edges;
+    struct Edge* prev = NULL;
+
+    while (curr) {
+        if (curr->dest->id == dest) {
+            if (!prev)
+                s->edges = curr->next;
+            else
+                prev->next = curr->next;
+
+            free(curr);
+            printf("Deleted.\n");
+            return;
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+
+    printf("Connection not found.\n");
+}
+
+void deleteNode() {
+    int id;
+    printf("Enter ID: ");
+    scanf("%d", &id);
+
+    struct Node* curr = head;
+    struct Node* prev = NULL;
+
+    while (curr) {
+        if (curr->id == id) {
+            struct Edge* e = curr->edges;
+            while (e) {
+                struct Edge* temp = e;
+                e = e->next;
+                free(temp);
+            }
+
+            if (!prev)
+                head = curr->next;
+            else
+                prev->next = curr->next;
+
+            free(curr);
+
+            struct Node* t = head;
+            while (t) {
+                struct Edge* e2 = t->edges;
+                struct Edge* p2 = NULL;
+
+                while (e2) {
+                    if (e2->dest->id == id) {
+                        if (!p2)
+                            t->edges = e2->next;
+                        else
+                            p2->next = e2->next;
+
+                        free(e2);
+                        break;
+                    }
+                    p2 = e2;
+                    e2 = e2->next;
+                }
+                t = t->next;
+            }
+
+            printf("Node deleted.\n");
+            return;
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+
+    printf("Not found.\n");
+}
+
+int main() {
+    int ch;
+
+    while (1) {
+        printf("\n1.Add Node\n2.Add Edge\n3.Display\n4.Search\n5.Update Node\n6.Update Edge\n7.Delete Node\n8.Delete Edge\n9.Exit\n");
+        scanf("%d", &ch);
+
+        switch (ch) {
+            case 1: addNode(); break;
+            case 2: addEdge(); break;
+            case 3: displayGraph(); break;
+            case 4: searchNode(); break;
+            case 5: updateNode(); break;
+            case 6: updateEdge(); break;
+            case 7: deleteNode(); break;
+            case 8: deleteEdge(); break;
+            case 9: exit(0);
+            default: printf("Invalid\n");
+        }
+    }
+}
